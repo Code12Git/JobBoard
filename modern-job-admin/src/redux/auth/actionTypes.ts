@@ -1,0 +1,10 @@
+export const ADMIN_LOGIN_REQUEST = 'LOGIN_REQUEST';
+export const ADMIN_LOGIN_SUCCESS = 'LOGIN_SUCCESS';
+export const ADMIN_LOGIN_FAILURE = 'LOGIN_FAILURE';
+export const ADMIN_LOGOUT_FAILURE ="ADMIN_LOGOUT_FAILURE"
+export const ADMIN_LOGOUT_REQUEST ='ADMIN_LOGOUT_REQUEST'
+export const ADMIN_LOGOUT_SUCCESS = 'ADMIN_LOGOUT_SUCCESS'
+export const successMessageType = "SUCCESS_MESSAGE_TYPE";
+export const successType = 'SUCCESS_TYPE';
+export const errorType = "ERROR_TYPE";
+export const errorMessageType = "ERROR_MESSAGE_TYPE";
