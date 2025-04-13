@@ -9,6 +9,7 @@ import {
 
 const initialState = {
   admin: null,
+  token:null,
   isLoading: false,
   successMessage: null,
   loginsuccess: false,
@@ -17,9 +18,15 @@ const initialState = {
   errorMessage: null,
 };
 
+interface AuthPayload {
+  token?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;  
+}
+
 const authReducer = (
   state = initialState,
-  { type, payload }: { type: string; payload: unknown }
+  { type, payload }: { type: string; payload: AuthPayload }
 ) => {
   switch (type) {
     case ADMIN_LOGIN_REQUEST:
@@ -31,6 +38,7 @@ const authReducer = (
       return {
         ...state,
         admin: payload,
+        token:payload.token,
         isLoading: false,
         loginsuccess: true,
         logoutsucess:false,
@@ -56,6 +64,7 @@ const authReducer = (
           admin: null,
           logoutsuccess:true,
           loginsuccess:false,
+          token:null,
           successMessage:'Admin Logged Out Successfully!',
           isLoading: false,
         };

@@ -1,5 +1,8 @@
 const { z } = require('zod');
 
+// Validation schema for user registration and login
+// This schema validates the data structure and types for user information
+
 const userSchema = z.object({
   id: z.number().int().positive().optional(),
   clerkId: z.string().min(1, { message: 'Clerk ID is required' }).trim(),

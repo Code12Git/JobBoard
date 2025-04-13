@@ -1,5 +1,8 @@
 const { z } = require("zod");
 
+// Validation schema for job posting
+// This schema validates the data structure and types for job postings
+
 const jobSchema = z.object({
   id: z.number().int().positive().optional(),
   title: z
@@ -10,15 +13,22 @@ const jobSchema = z.object({
     .string({ required_error: "Description is required" })
     .min(30, { message: "Description should be at least 30 characters long" }),
     companyImg: z.preprocess(
-      (val) => (val instanceof File ? URL.createObjectURL(val) : val),
-      z.string().url({ message: "Invalid company image URL" }).optional()
+      (val) => {
+        if (val instanceof File) return val; 
+        if (typeof val === "string") return val;  
+        return undefined;
+      },
+      z.union([
+        z.instanceof(File, { message: "Invalid file format" }),
+        z.string().url({ message: "Invalid company image URL" }),
+      ]).optional()
     ),
-    
     stipend: z.preprocess((val) => Number(val), z.number().positive()),
     location: z
     .string({ required_error: "Location is required" })
-    .min(5, { message: "Location should be at least 5 characters long" })
+    .min(2, { message: "Location should be at least 5 characters long" })
     .max(50, { message: "Location should be at most 50 characters long" }),
+  employementType:z.string({required_error:'Employement type is required'}).min(5,{message:'Employement type should be at least 5 characters long'}).max(20,{message:'Employement type should not be more than 20 characters long '}),  
   jobType: z
     .string({ required_error: "Job type is required" })
     .min(5, { message: "Job type should be at least 5 characters long" })

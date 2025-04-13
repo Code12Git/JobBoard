@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import Image from 'next/image'
 
 type UserData = {
-  avatar?: string;  
+  profilePic?: string;  
   name?: string;
   status?: "online" | "idle" | "offline";
 }
@@ -12,13 +12,14 @@ type UserData = {
 const AvatarImage = ({ userData }: { userData: UserData }) => {
   const [isImageClicked, setIsImageClicked] = useState(false);
 
-  const statusColors = {
-    online: "bg-green-500",
-    idle: "bg-yellow-500",
-    offline: "bg-gray-500",
-  };
+  // const statusColors = {
+  //   online: "bg-green-500",
+  //   idle: "bg-yellow-500",
+  //   offline: "bg-gray-500",
+  // };
+  console.log(userData)
 
-  const avatarSrc = userData?.avatar || "https://i.pravatar.cc/150?img=0";
+  const avatarSrc = userData?.profilePic || "https://i.pravatar.cc/150?img=0";
   const userName = userData?.name || "User Avatar";
 
   return (
@@ -34,11 +35,11 @@ const AvatarImage = ({ userData }: { userData: UserData }) => {
         />
         
         {/* Status Indicator */}
-        {userData?.status && (
+        {/* {userData?.status && (
           <div
             className={`absolute bottom-0 right-0 w-5 h-5 rounded-full border-2 border-white ${statusColors[userData.status]}`}
           ></div>
-        )}
+        )} */}
       </div>
 
       {/* Modal */}

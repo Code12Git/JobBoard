@@ -1,8 +1,7 @@
 import {
-  LOGIN_FAILURE,
-  LOGIN_REQUEST,
-  LOGIN_SUCCESS,
-  LOGOUT,
+  UPDATE_USER_FAILURE,
+  UPDATE_USER_REQUEST,
+  UPDATE_USER_SUCCESS,
 } from "./actionTypes";
 
 const initialState = {
@@ -14,44 +13,39 @@ const initialState = {
   successMessage: null,
 };
 
+console.log(initialState.user)
+
 const authReducer = (
   state = initialState,
   { type, payload }: { type: string; payload: unknown }
 ) => {
   switch (type) {
-    case LOGIN_REQUEST:
+    case UPDATE_USER_REQUEST:
       return {
         ...state,
-        isLoading: true,
-      };
-    case LOGIN_SUCCESS:
+        isLoading:true,
+      } 
+    case UPDATE_USER_SUCCESS:
       return {
         ...state,
-        isLoading: false,
         user: payload,
-        success: true,
-        successMessage: "User Logged In Successfully",
-      };
-    case LOGIN_FAILURE:
+        success:true,
+        successMessage:'Role Updated Successfully'
+      }  
+     case UPDATE_USER_FAILURE:
       return {
         ...state,
-        isLoading: false,
-        error: true,
-        errorMessage: payload,
-      };
-    case LOGOUT:
-      return {
-        ...state,
-        user: null,
-        isLoading: false,
-        error: false,
-        errorMessage: null,
-        success: false,
-        successMessage: null,
-      };
+        error:true,
+        errorMessage:'Error updating USER'
+      } 
     default:
       return state;
   }
 };
 
 export default authReducer;
+
+
+
+
+

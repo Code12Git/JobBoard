@@ -16,10 +16,13 @@ const AdminLoginPage = () => {
     username: "",
     password: "",
   });
+ 
+
 
   const { isLoading,loginsuccess,successMessage, error } = useSelector((state: RootState) => state.auth);
-  console.log(isLoading)
 
+
+  
   useEffect(() => {
     if (loginsuccess) {
       toast.success(successMessage);
@@ -35,6 +38,7 @@ const AdminLoginPage = () => {
   const submitHandler = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
+     
       await dispatch(login(credentials));
     } catch (err) {
   console.log('Triggered')

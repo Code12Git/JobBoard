@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { jobSchema } from "@/validation";
 import { z } from "zod";
@@ -19,16 +19,32 @@ import { createJob } from "@/redux/jobs/actions";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 import { useRouter } from "next/navigation";
-import { usePrivateInstance } from "@/helpers/axios";
 import { generateJobDescription } from "@/helpers/openai";
+import { useAxiosPrivate } from "@/helpers/axios";
+import { useAppSelector } from "@/hooks/useAppSelector";
+import toast from "react-hot-toast";
+import { CLEAR_ERROR } from "@/redux/jobs/actionTypes";
 
-type JobForm = z.infer<typeof jobSchema>;
+type JobForm = z.infer<typeof jobSchema> & { companyImg?: File | string };
 
 const PostJob = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const {error,errorMessage} = useAppSelector(state => state.job)
+  console.log(error,errorMessage)
   const router = useRouter();
-  const privateInstance = usePrivateInstance();
   const [loadingDescription, setLoadingDescription] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const privateInstance = useAxiosPrivate();
+
+  useEffect(() => {
+    if (error) {
+      toast.error(errorMessage);
+      setTimeout(() => dispatch({type:CLEAR_ERROR}), 3000);
+    }
+  }, [error,errorMessage,dispatch]);
+  
+  
 
   const form = useForm<JobForm>({
     resolver: zodResolver(jobSchema),
@@ -40,14 +56,10 @@ const PostJob = () => {
       jobType: "",
       stipend: 0,
       contact: "",
-      companyImg: '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      employementType:'',
+      companyImg: undefined,
     },
   });
-
-  console.log(form);
-  console.log(form.formState.errors);
 
   const handleTitleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const title = e.target.value;
@@ -63,34 +75,34 @@ const PostJob = () => {
       } finally {
         setTimeout(() => {
           setLoadingDescription(false);
-        }, 10000);
+        }, 3000);
       }
     }
   };
+  console.log(form.getValues())
 
-  console.log("Form Values:", form.getValues());
-  console.log("Form Errors:", form.formState.errors);
   const onSubmit = async (data: JobForm) => {
-    console.log("Form submitted!");
-    console.log("Form Data:", data);
     try {
       const formData = new FormData();
-    Object.keys(data).forEach((key) => {
-      if (key === "companyImg" && data.companyImg instanceof File) {
-        formData.append("companyImg", data.companyImg);
-      } else {
-        formData.append(key, data[key]);
-      }
-    });
+      Object.keys(data).forEach((key) => {
+        formData.append(key, data[key as keyof JobForm] as string);
+      });
 
-      console.log("Dispatching createJob...");
-      await dispatch(createJob(formData, privateInstance));
-      console.log("Job created, navigating to /jobs...");
+
+      console.log("", formData);
+      
+      if (file) {
+        console.log(file);
+        formData.append("companyImg", file);
+      }
+      await dispatch(createJob(form.getValues(), privateInstance));
       router.push("/jobs");
     } catch (err) {
       console.error("Error submitting job:", err);
     }
   };
+
+ 
 
   return (
     <Form {...form}>
@@ -103,7 +115,6 @@ const PostJob = () => {
         </h2>
 
         <div className="space-y-4">
-          {/* Job Title */}
           <FormField
             control={form.control}
             name="title"
@@ -127,7 +138,6 @@ const PostJob = () => {
             )}
           />
 
-          {/* Job Description */}
           <FormField
             control={form.control}
             name="description"
@@ -151,8 +161,7 @@ const PostJob = () => {
             )}
           />
 
-          {/* Company Name */}
-          <FormField
+<FormField
             control={form.control}
             name="companyName"
             render={({ field }) => (
@@ -171,7 +180,79 @@ const PostJob = () => {
             )}
           />
 
-          {/* Location */}
+          <FormField
+            control={form.control}
+            name="companyImg"
+            render={({ field: { onChange } }) => (
+              <FormItem>
+                <FormLabel className="text-gray-700">Company Image</FormLabel>
+                <FormControl>
+                  <Input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={(e) => {
+                      if (e.target.files?.[0]) {
+                        const file = e.target.files[0];
+                        console.log(e.target.files)
+                        setFile(file);
+                        onChange(file);
+                      }
+                    }}
+                    className="w-full border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-300 rounded-xl p-3"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+<FormField
+            control={form.control}
+            name="employementType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-gray-700">Employement Type</FormLabel>
+                <FormControl>
+
+                  {/* <Input
+                    placeholder="e.g. Full-time, Part-time"
+                    type="text"
+                    {...field}
+                    className="w-full border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-300 rounded-xl p-3"
+                  /> */}
+                  <select
+                      className="w-full border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-300 rounded-xl p-3"
+                       {...field}>
+                      <option value='Full Time'>Full-Time</option>
+                      <option value='Part Time'>Part-Time</option>
+                      <option value='Contract'>Contract</option>
+                    </select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+<FormField
+  control={form.control}
+  name="jobType"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel className="text-gray-700">Job Type</FormLabel>
+      <FormControl>
+        <select
+          {...field}
+          className="w-full border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-300 rounded-xl p-3"
+        >
+          <option value='Remote'>Remote</option>
+          <option value='Hybrid'>Hybrid</option>
+          <option value='Onsite'>Onsite</option>
+        </select>
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
           <FormField
             control={form.control}
             name="location"
@@ -191,52 +272,11 @@ const PostJob = () => {
             )}
           />
 
-          {/* Job Type */}
-          <FormField
-            control={form.control}
-            name="jobType"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-gray-700">Job Type</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="e.g. Full-time, Part-time"
-                    type="text"
-                    {...field}
-                    className="w-full border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-300 rounded-xl p-3"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
 
-          {/* Company Img */}
-          <FormField
-            control={form.control}
-            name="companyImg"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-gray-700">Company Image</FormLabel>
-                <FormControl>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        field.onChange(file);
-                      }
-                    }}
-                    className="w-full border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-300 rounded-xl p-3"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
 
-          {/* Stipend */}
+
+         
+
           <FormField
             control={form.control}
             name="stipend"
@@ -259,7 +299,6 @@ const PostJob = () => {
             )}
           />
 
-          {/* Contact Information */}
           <FormField
             control={form.control}
             name="contact"
@@ -282,10 +321,9 @@ const PostJob = () => {
           />
         </div>
 
-        {/* Submit Button */}
         <Button
           type="submit"
-          className="mt-6 w-full bg-gradient-to-r from-teal-500 via-blue-600 to-indigo-600 text-white py-3 rounded-xl text-lg font-semibold hover:shadow-lg hover:opacity-90 transition duration-300"
+          className="mt-6 w-full bg-blue-600 text-white py-3 rounded-xl text-lg font-semibold"
         >
           Submit Job Posting
         </Button>

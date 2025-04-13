@@ -3,10 +3,11 @@ import { thunk, ThunkMiddleware } from 'redux-thunk';
 import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import authReducer from './auth/reducer';
-
+import userReducer from './user/reducer';
 // Define types
 export interface RootState {
   auth: AuthState;
+  user: userState;
 }
 
 
@@ -28,6 +29,7 @@ const persistConfig = {
 
 const rootReducer = combineReducers({
   auth: authReducer,
+  user:userReducer
 });
 
 const persistedReducer = persistReducer<RootState>(persistConfig, rootReducer);

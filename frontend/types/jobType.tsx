@@ -9,8 +9,15 @@ export interface jobType{
     jobType:string,
     contact: string,
     companyName: string,
+    employementType:string,
     url: string,
     createdAt: Date,
     postedBy?: string
 }
 
+
+export interface filteredValue {
+    jobType: string;
+    location: string;
+    employementType:string;
+  }

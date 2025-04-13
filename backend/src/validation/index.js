@@ -1,3 +1,4 @@
 const userSchema = require('./userValidation')
 const jobSchema = require('./jobValidation')
-module.exports = {userSchema,jobSchema}
+const applySchema = require('./applyValidation')
+module.exports = {userSchema,jobSchema,applySchema}

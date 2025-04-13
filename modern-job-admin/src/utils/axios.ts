@@ -1,8 +1,22 @@
-import axios from 'axios'
+import {  store } from '@/redux/store';
+import axios from 'axios';
 
-const baseURL = 'http://localhost:3001/api'
+const BASEURL = 'http://localhost:3001/api';
 
 export const publicInstance = axios.create({
-    baseURL:baseURL
-})
+  baseURL: BASEURL
+});
 
+export const privateInstance = axios.create({
+  baseURL: BASEURL,
+});
+
+privateInstance.interceptors.request.use(
+  (config) => {
+    const token = store.getState().auth.token; 
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error))

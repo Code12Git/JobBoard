@@ -37,7 +37,7 @@ const create = async (request, response) => {
 
 const update = async (request, response) => {
   try {
-    const result = await authManager.updateRole(request.body,request.user,request.params);
+    const result = await authManager.updateRole(request.body,request.user);
     return responseManager.sendSuccessResponse(
       response,
       result,

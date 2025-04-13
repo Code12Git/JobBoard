@@ -3,49 +3,92 @@ const {appError} = require('../utils')
 const {ClerkExpressRequireAuth} = require('@clerk/clerk-sdk-node')
 const { NOT_FOUND, INVALID_ACCESS_TOKEN, NO_AUTH_HEADER, UNAUTHORIZED } = require('../utils/errors');
 const prisma = require('../lib');
- 
-const verifyToken = async (req, res, next) => {
-  ClerkExpressRequireAuth()(req, res, async () => {
-    try {
-      const { userId } = req.auth;
+const {fromEnv} = require('../utils')
+ const jwt = require('jsonwebtoken')
+ const {clerkClient} = require('@clerk/clerk-sdk-node')
+ const verifyToken = async (req, res, next) => {
+  try {
+    // 1. Verify and decode Clerk token
+    const authHeader = req.headers.authorization;
+    // console.log(authHeader)
+    if (!authHeader?.startsWith("Bearer ")) {
+      throw new appError(401, "Authorization header missing or invalid");
+    }
+    // console.log(authHeader)
+    const token = authHeader.split(" ")[1];
+    // console.log(token)
+    const session = await clerkClient.verifyToken(token);
+    // console.log(session)
+    if (!session?.sub) {
+      throw new appError(401, "Invalid authentication token");
+    }
+    // console.log(token,session)
 
-      if (!userId) {
-        return next(new appError(INVALID_ACCESS_TOKEN.code, INVALID_ACCESS_TOKEN.message, INVALID_ACCESS_TOKEN.statusCode));
-      }
+    // 2. Find or create user in database
+    let user = await prisma.user.findUnique({
+      where: { clerkId: session.sub }
+    });
 
-      const user = await prisma.user.findUnique({
-        where: { clerkId: userId },
+    // console.log(user)
+
+    if (!user) {
+      const clerkUser = await clerkClient.users.getUser(session.sub);
+      user = await prisma.user.create({
+        data: {
+          clerkId: clerkUser.id,
+          email: clerkUser.emailAddresses[0]?.emailAddress,
+          name: `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim(),
+          profilePic: clerkUser.imageUrl,
+          role: "jobseeker" // Default role
+        }
       });
+    }
 
-      console.log("User role:", user?.role);
+    // 3. Attach user to request
+    req.user = user;
+    next();
 
-      if (!user) {
-        return next(new appError(NOT_FOUND.code, NOT_FOUND.message, NOT_FOUND.statusCode));
+  } catch (error) {
+    console.error("Authentication error:", error);
+    next(error);
+  }
+};
+
+
+// Employer role verification middleware
+const verifyTokenAndEmployer = async (req, res, next) => {
+  await verifyToken(req, res, async () => {
+    try {
+      if (req.user.role === 'employer') {
+        return next();
       }
-
-      req.user = user;
-      console.log("User in request:", req.user);
-      next();
+      throw new appError(
+        UNAUTHORIZED.code,
+        'You are not authorized as an employer',
+        UNAUTHORIZED.statusCode
+      );
     } catch (err) {
-      console.error("Error in verifyToken:", err);
-      next(err); 
+      next(err);
     }
   });
 };
 
-
-const verifyTokenAndEmployer = async(req , res , next ) => {
-    try{
-        await verifyToken(req,res,async() => {
-            if(req.user.role==='employer'){
-                return next()
-            }
-            throw new appError(UNAUTHORIZED.code,'You are not an employer',UNAUTHORIZED.statusCode)
-        })
-    }catch(err){
-        next(err)
+const verifyTokenAndEmployerOrAdmin = async (req, res, next) => {
+  await verifyToken(req, res, async () => {
+    try {
+      if (req.user.role === 'employer' || req.user.role === 'admin') {
+        return next();
+      }
+      throw new appError(
+        UNAUTHORIZED.code,
+        'You are not authorized as an employer or admin',
+        UNAUTHORIZED.statusCode
+      );
+    } catch (err) {
+      next(err);
     }
-}
+  });
+};
 
 const verifyTokenAndAdmin = async (req, res, next) => {
   try {
@@ -63,8 +106,9 @@ const verifyTokenAndAdmin = async (req, res, next) => {
 
      const decodedToken = jwt.verify(accessToken, fromEnv("JWT_SECRET"));
 
-     const user = await prisma.admin.findUnique({ username: decodedToken.username });
-
+     const user = await prisma.admin.findUnique({
+      where: { username: decodedToken.username }
+    });
     if (!user) {
       throw new appError(NOT_FOUND.code, NOT_FOUND.message, NOT_FOUND.statusCode);
     }
@@ -82,4 +126,4 @@ const verifyTokenAndAdmin = async (req, res, next) => {
 };
 
 
-module.exports = { verifyToken, verifyTokenAndAdmin , verifyTokenAndEmployer };
+module.exports = { verifyToken, verifyTokenAndAdmin , verifyTokenAndEmployer,verifyTokenAndEmployerOrAdmin };

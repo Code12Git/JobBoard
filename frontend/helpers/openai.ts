@@ -20,9 +20,6 @@ export const generateJobDescription = async (title: string) => {
         try {
             const prompt = `Generate a professional job description for the job title: "${title}".`;
             const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-            // const models = await genAI.lise
-            // console.log('Available Models:', models);
-            // Generate content
             const result = await model.generateContent(prompt);
             const response = await result.response;
 

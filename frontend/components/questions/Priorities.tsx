@@ -10,10 +10,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Thanks from "./Thanks";
+import {updateRole} from "@/redux/auth/actions";
 import { useDispatch  } from "react-redux";
-import login from "@/redux/auth/actions";
-import { useAuth } from "@clerk/nextjs";
-import { usePrivateInstance } from "@/helpers/axios";
+// import login from "@/redux/auth/actions";
+// import { useAuth } from "@clerk/nextjs";
+import { useAxiosPrivate } from "@/helpers/axios";
+import { AppDispatch } from "@/redux/store";
 interface PrioritiesProps {
   role: string;
   setStep: (step: number) => void;
@@ -22,21 +24,26 @@ interface PrioritiesProps {
   open:boolean;
 }
 
-const Priorities: React.FC<PrioritiesProps> = ({ role, setStep, step,setOpen,open }) => {
-  const { getToken } = useAuth();
-  const privateInstance = usePrivateInstance();
-  console.log(getToken)
-  const dispatch = useDispatch()
-
-  const nextHandler = async() => {
-    try{
-  
-        await login({ role }, dispatch,privateInstance);
-    if (step === 2) {
-      setStep(3);
-      setOpen(false)
-    } }catch(err){
-      throw err;
+const Priorities: React.FC<PrioritiesProps> = ({ role, setStep, step, setOpen, open }) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const axiosPrivate = useAxiosPrivate();
+  const nextHandler = async () => {
+    console.log('Attempting role update to:', role);
+    
+    try {
+     await dispatch(updateRole(role,axiosPrivate));
+      
+     
+        console.log('Role update successful');
+        
+        if (step === 2) {
+          setStep(3);
+          setOpen(false);
+          console.log('Progressed to step 3');
+        }
+      
+    } catch (err) {
+      console.error('Unexpected error:', err);
     }
   };
 

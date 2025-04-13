@@ -1,11 +1,13 @@
 const { clerkClient } = require("@clerk/express");
-const { NOT_FOUND } = require("../utils/errors");
+const { NOT_FOUND, INVALID_CREDENTIALS } = require("../utils/errors");
 const { appError } = require("../utils");
 const _ = require("lodash");
 const { fromEnv } = require("../utils");
 const prisma = require("../lib");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+
+
 const getUser = async (clerkId, token) => {
   try {
     const user = await clerkClient.users.getUser(clerkId);
@@ -79,39 +81,31 @@ const createUser = async (body) => {
 
 const adminLogin = async (body) => {
   const { username, password } = body;
-  console.log(body);
-  try {
-    if (!username || !password) {
-      throw new appError({ ...NOT_FOUND, message: "Admin details not found" });
-    }
 
-    const saltRounds = 10;
-    const adminUsername = fromEnv("ADMIN_USERNAME");
-    const adminPlainPassword = fromEnv("ADMIN_PASSWORD");
-    const adminPasswordHash = bcrypt.hashSync(adminPlainPassword, saltRounds);
-
-    const isMatch =
-      username === adminUsername &&
-      bcrypt.compareSync(password, adminPasswordHash);
-    if (!isMatch) {
-      throw new appError({
-        statusCode: 401,
-        message: "Invalid credentials",
-      });
-    }
-
-    const token = jwt.sign({ username: adminUsername }, fromEnv("JWT_SECRET"), {
-      expiresIn: "1h",
-    });
-    return { username: adminUsername, token };
-  } catch (err) {
-    throw err;
+  if (!username || !password) {
+    throw new appError({ statusCode: 400, message: "Admin details not found" });
   }
+
+   const ADMIN_USERNAME = fromEnv('ADMIN_USERNAME');
+  const ADMIN_PASSWORD = fromEnv('ADMIN_PASSWORD');
+
+   if (username !== ADMIN_USERNAME || password !== ADMIN_PASSWORD) {
+    throw new appError({ ...INVALID_CREDENTIALS, message: "Invalid credentials" });
+  }
+
+   const token = jwt.sign(
+    { username: username }, 
+    process.env.JWT_SECRET,  
+    { expiresIn: "1h" }
+  );
+
+  return { username, token };
 };
 
 const updateRole = async (body, user) => {
   const { role } = body;
   const { id } = user;
+  console.log(role,id)
   try {
     const updatedUser = await prisma.user.update({
       where: { id },

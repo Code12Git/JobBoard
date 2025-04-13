@@ -9,12 +9,13 @@ const prisma = require("../lib");
 const { uploadOnCloudinary } = require("../config/cloudinary");
 
 const create = async (user, body,file) => {
-  const { name } = user;
+  const { id } = user;
   const {
     title,
     description,
     companyImg,
-    stipend,
+    employementType,
+    stipend = 0,
     location,
     jobType,
     contact,
@@ -28,6 +29,7 @@ const create = async (user, body,file) => {
       _.isEmpty(location) ||
       _.isEmpty(jobType) ||
       _.isEmpty(contact) ||
+      _.isEmpty(employementType) ||
       _.isEmpty(companyName)
     ) {
       throw new appError(
@@ -52,29 +54,54 @@ const create = async (user, body,file) => {
       );
     }
 
-    let imgUrl = "";
-    if (req.file) {
-      imgUrl = await uploadOnCloudinary(file.path);
+    console.log("Exising job:",existingJob)
+
+    let imgUrl = "";   
+
+    if (file && file.path) {
+      try {
+        imgUrl = await uploadOnCloudinary(file.path);
+        console.log("Uploaded Image URL:", imgUrl);
+      } catch (err) {
+        console.error("Cloudinary upload failed:", err);
+        throw new appError(
+          UPLOAD_ERROR.code,
+          "Image upload failed",
+          UPLOAD_ERROR.statusCode
+        );
+      }
     }
 
+
+    
+    console.log("Final Image URL:", imgUrl);  
+    
+    
        
 
     const newJob = await prisma.job.create({
       data: {
         title,
         description,
-        companyImg:imgUrl,
+        companyImg:imgUrl || null,
         stipend,
+        employementType,
         location,
         jobType,
         companyName,
         contact,
         url,
-        postedBy: name,
+        postedBy: id,
       },
+      include:{
+        user:{select:{name:true}}
+      }
     });
 
-    return newJob;
+    return {
+      ...newJob,
+      postedBy: newJob.user.name,
+    };
   } catch (err) {
     throw err;
   }
@@ -90,6 +117,7 @@ const update = async (params, body) => {
     jobType,
     contact,
     companyName,
+    employementType,
     url,
   } = body;
   const { id } = params;
@@ -107,6 +135,7 @@ const update = async (params, body) => {
       _.isEmpty(location) ||
       _.isEmpty(jobType) ||
       _.isEmpty(contact) ||
+      _.isEmpty(employementType) ||
       _.isEmpty(companyName)
     ) {
       throw new appError(
@@ -134,6 +163,7 @@ const update = async (params, body) => {
         location,
         jobType,
         companyName,
+        employementType,
         contact,
         url,
         updatedAt: new Date(),
@@ -211,5 +241,9 @@ const getAll = async (params) => {
     throw err;
   }
 };
+
+const apply = async() => {
+  
+}
 
 module.exports = { create, update, deleteOne, get, getAll };

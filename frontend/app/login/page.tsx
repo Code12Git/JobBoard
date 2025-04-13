@@ -13,8 +13,6 @@ const Login = () => {
   const router = useRouter();
   useEffect(() => {
     if (isLoaded && isSignedIn && user) {
-      console.log(isLoaded,user,isSignedIn)
-      console.log("User Id:",user.id)
       const fetchData = async () => {
         try {
           const token = await getToken();
@@ -33,7 +31,7 @@ const Login = () => {
       };
       fetchData();
     }
-  }, [isLoaded, isSignedIn, user, router]);
+  }, [isLoaded, isSignedIn, user, router,getToken]);
 
   if (!isLoaded) {
     return <div className="flex justify-center items-center h-screen text-xl font-semibold">Loading...</div>;

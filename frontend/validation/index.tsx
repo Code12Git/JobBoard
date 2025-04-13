@@ -1,3 +1,3 @@
 import jobSchema from "./JobValidation";
 
-export {jobSchema}
+export { jobSchema }

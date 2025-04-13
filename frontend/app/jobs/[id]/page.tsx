@@ -1,6 +1,4 @@
 "use client";
-
-import { usePrivateInstance } from "@/helpers/axios";
 import { fetchJobById } from "@/redux/jobs/actions";
 import type { AppDispatch } from "@/redux/store";
 import { jobType } from "@/types/jobType";
@@ -8,17 +6,19 @@ import Image from "next/image";
 import { useParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
-
+import { useAxiosPrivate } from "@/helpers/axios";
+import Link from "next/link";
 const JobDetails = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const privateInstance = usePrivateInstance();
   const { id } = useParams();
   const [job, setJob] = useState<jobType | null>(null);
-
+  const privateInstance = useAxiosPrivate()
+  
   useEffect(() => {
     const fetchJob = async () => {
       try {
-        const res = await dispatch(fetchJobById(privateInstance, id as string));
+        const res = await dispatch(fetchJobById(id as string,privateInstance));
+        console.log(res)
         setJob(res);
       } catch (err) {
         console.error(err);
@@ -57,13 +57,18 @@ const JobDetails = () => {
           </div>
 
           <div className="flex justify-between border-b pb-2">
+            <span className="font-semibold text-gray-700">Employement Type:</span>
+            <span className="text-gray-600">{job.employementType}</span>
+          </div>
+
+          <div className="flex justify-between border-b pb-2">
             <span className="font-semibold text-gray-700">Location:</span>
             <span className="text-gray-600">{job.location}</span>
           </div>
 
           <div className="flex justify-between border-b pb-2">
             <span className="font-semibold text-gray-700">Stipend:</span>
-            <span className="text-green-600 font-bold">₹{job.stipend.toLocaleString()}</span>
+            <span className="text-green-600 font-bold">${job.stipend}</span>
           </div>
 
           <div className="flex justify-between border-b pb-2">
@@ -82,8 +87,21 @@ const JobDetails = () => {
           </div>
 
           <div className="mt-6">
-            <h3 className="text-xl font-semibold text-gray-800">Job Description</h3>
-            <p className="mt-2 text-gray-600 leading-relaxed">{job.description}</p>
+          <h3 className="text-xl font-semibold text-gray-800">Job Description</h3>
+<div className="mt-2 text-gray-600 leading-relaxed space-y-2">
+  {job.description.split("\n").map((line, index) => (
+    <p key={index} className="mt-1">
+      {line}
+    </p>
+  ))}
+</div>
+<div className="flex justify-center items-center mt-6">
+  <Link href={`/jobs/${id}/apply`}>
+  <button className="bg-gradient-to-r from-red-500 to-red-400 text-white font-semibold px-6 py-2 rounded-lg shadow-md hover:from-red-600 hover:to-red-500 hover:shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95">
+    Apply Now
+  </button>
+  </Link>
+</div>
           </div>
         </div>
       </div>

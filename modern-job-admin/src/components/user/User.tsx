@@ -3,7 +3,9 @@ import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiMail, FiClock, FiActivity, FiSearch } from "react-icons/fi";
 import AvatarImage from "./image/avatarImage";
-
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/redux/store";
+import { fetchUser } from "@/redux/user/action";
 interface User {
   id: string;
   name: string;
@@ -15,81 +17,29 @@ interface User {
 }
 
 const Users = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const{isLoading,users,error} = useSelector((state:RootState) => state.user)
   const [searchTerm, setSearchTerm] = useState("");
+  
+  const dispatch = useDispatch<AppDispatch>();
+ 
+  useEffect(()=>{
+    const fetchUsers = async() => {
+    await dispatch(fetchUser())
+    }
+    fetchUsers()
+  },[])
 
-  useEffect(() => {
-    const fetchLoggedInUsers = async () => {
-      try {
-        // Simulating API call with mock data
-        const response = await new Promise<User[]>((resolve) => {
-          setTimeout(() => {
-            resolve([
-              {
-                id: "1",
-                name: "John Doe",
-                email: "john@example.com",
-                role: "Admin",
-                lastLogin: new Date().toISOString(),
-                avatar: "https://i.pravatar.cc/150?img=1",
-                status: "online",
-              },
-              {
-                id: "2",
-                name: "Jane Smith",
-                email: "jane@example.com",
-                role: "Developer",
-                lastLogin: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-                avatar: "https://i.pravatar.cc/150?img=2",
-                status: "idle",
-              },
-              {
-                id: "3",
-                name: "Bob Johnson",
-                email: "bob@example.com",
-                role: "Designer",
-                lastLogin: new Date(
-                  Date.now() - 1000 * 60 * 60 * 2
-                ).toISOString(),
-                avatar: "https://i.pravatar.cc/150?img=3",
-                status: "offline",
-              },
-              {
-                id: "4",
-                name: "Alice Williams",
-                email: "alice@example.com",
-                role: "Manager",
-                lastLogin: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-                avatar: "https://i.pravatar.cc/150?img=4",
-                status: "online",
-              },
-            ]);
-          }, 800);
-        });
 
-        setUsers(response);
-        setLoading(false);
-      } catch (err) {
-        setError("Failed to fetch users");
-        setLoading(false);
-        console.error(err);
-      }
-    };
 
-    fetchLoggedInUsers();
-  }, []);
-
-  const filteredUsers = users.filter(
-    (user) =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = users?.filter(
+    (user:User) =>
+      user?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user?.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
  
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <motion.div
@@ -145,7 +95,7 @@ const Users = () => {
       </div>
 
       <AnimatePresence>
-        {filteredUsers.length === 0 ? (
+        {filteredUsers?.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -158,7 +108,7 @@ const Users = () => {
           </motion.div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredUsers.map((user) => (
+            {filteredUsers?.map((user:User) => (
               <motion.div
                 key={user.id}
                 layout
@@ -185,7 +135,7 @@ const Users = () => {
                 </div>
 
                 <div className="pt-16 pb-6 px-4 text-center">
-                  <h2 className="text-xl font-semibold">{user.name}</h2>
+                  <h2 className="text-xl font-bold text-black">{user.name}</h2>
                   <p className="text-gray-600">{user.role}</p>
 
                   <div className="mt-4 space-y-2 text-sm text-gray-600">

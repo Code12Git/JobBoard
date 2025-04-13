@@ -20,9 +20,9 @@ interface User {
 export default function Home() {
   const { isLoaded } = useAuth();
   const router = useRouter();
-  const user = useAppSelector((state) => state.auth.user.user) as User || null;
+  const user = useAppSelector((state) => state.auth.user) as User || null;
 
-  console.log(user);
+  console.log("User:",user);
 
   if (!isLoaded) {
     return (

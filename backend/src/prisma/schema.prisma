@@ -35,6 +35,10 @@ model User {
   updatedAt  DateTime     @default(now())
   Job        Job[]
   token      String       @unique
+
+  Application Application[]
+
+  workHistory workHistory[]
 }
 
 model Admin {
@@ -48,18 +52,62 @@ model Admin {
 }
 
 model Job {
-  id          Int      @id @default(autoincrement())
-  user        User     @relation(fields: [postedBy], references: [id])
-  title       String
-  description String
-  companyImg  String?
-  stipend     Int?
-  location    String
-  jobType     String
-  contact     String
-  companyName String
-  url         String?
-  postedBy    Int
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              Int      @id @default(autoincrement())
+  user            User     @relation(fields: [postedBy], references: [id])
+  title           String
+  description     String
+  companyImg      String?
+  stipend         Int?
+  location        String
+  employementType String @default("Full Time")
+  jobType         String
+  contact         String
+  companyName     String
+  url             String?
+  postedBy        Int
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  Application Application[]
+
+  workHistory workHistory[]
+}
+
+
+model Application {
+  id               Int       @id @default(autoincrement())
+  user             User      @relation(fields: [userId], references: [id])
+  job              Job       @relation(fields: [jobId], references: [id])
+  userId           Int
+  jobId           Int
+  name             String
+  email            String
+  phone            Int
+  experience       Int
+  resume           String?
+  coverLetter      String?
+  previousStipend  Int
+  previousCompany  String
+  skill            String[]   
+  message          String
+  workHistory      String     
+  status           String     @default("applied")
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  @@unique([userId, jobId])
+}
+
+model workHistory {
+  id               Int       @id @default(autoincrement())
+  user             User      @relation(fields: [userId], references: [id])
+  job              Job       @relation(fields: [jobId], references: [id])
+  userId           Int
+  jobId           Int
+  companyName      String
+  designation      String
+  startDate        DateTime
+  endDate          DateTime
+  description      String
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 }

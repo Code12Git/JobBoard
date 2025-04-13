@@ -15,7 +15,6 @@ const login = (credentials:Admin) => async (dispatch: Dispatch) => {
   try {
     dispatch({ type: ADMIN_LOGIN_REQUEST, payload: null });
     const res = await publicInstance.post("/auth/admin",credentials);
-    console.log(res)
     dispatch({ type: ADMIN_LOGIN_SUCCESS, payload: res.data.data });
     return res;
   } catch (err) {
