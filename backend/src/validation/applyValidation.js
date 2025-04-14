@@ -1,26 +1,43 @@
-const { z } = require("zod");
-
-// Validation schema for job application
-// This schema validates the data structure and types for job applications
+const z = require("zod");
 
 const applySchema = z.object({
   id: z.number().int().positive().optional(),
 
   name: z.string().min(4, { message: "Name is required" }),
   email: z.string().email({ message: "Invalid email address" }),
-  phone: z.number().min(10, { message: "Phone number is required" }),
+  phone: z.coerce.number().optional(),
+
 
   message: z.string().min(10, { message: "Message is required" }),
-  experience: z.number().min(0, { message: "Experience is required" }),
-  resume: z.string().min(4, { message: "Resume is required" }),
+  experience: z.coerce.number().optional(),
+coverLetter:z
+.any()
+.optional()
+.refine(
+  (files) => !files || files.length === 0 || files.length >= 1,
+  "Cover Letter is required"
+)
+.refine(
+  (files) =>
+    !files || files.length === 0 || files[0]?.size <= 5_000_000,
+  "File size should be less than 5MB"
+)
+.refine(
+  (files) =>
+    !files ||
+    files.length === 0 ||
+    ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"].includes(
+      files[0]?.type
+    ),
+  "Only .pdf, .doc, and .docx formats are supported"
+),
 
-  coverLetter: z.string().min(4, { message: "Cover letter is required" }).optional(),
 
-  previousStipend: z.number().min(0, { message: "Previous stipend is required" }),
+previousStipend: z.coerce.number().optional(),
+
   previousCompany: z.string().min(4, { message: "Previous company is required" }),
 
-  skill: z.array(z.string()).min(1, { message: "At least one skill is required" }),
-
+  skills: z.string().min(4, { message: "Skills are required" }),
   workHistory: z.array(z.object({
     company: z.string().min(4, { message: "Company name is required" }),
     designation: z.string().min(4, { message: "Designation is required" }),
@@ -35,7 +52,8 @@ const applySchema = z.object({
 
   status: z.enum(["applied", "interview", "offered", "rejected"]).optional(),
 
-  jobId: z.number().int().positive(),
+  jobId: z.coerce.number(),
+
   userId: z.number().int().positive().optional(),
 }).strict();
 

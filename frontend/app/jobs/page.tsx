@@ -24,12 +24,14 @@ const Job = () => {
     location: "",
   });
   const dispatch = useDispatch<AppDispatch>();
+
   const privateInstance = useAxiosPrivate()
   console.log("Jobs:",jobs)
   useEffect(() => {
     const fetchJobs = async () => {
       try {
          await dispatch(fetchJob(privateInstance));
+       
       } catch (err) {
         console.error(err);
       }

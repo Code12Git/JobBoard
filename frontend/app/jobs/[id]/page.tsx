@@ -13,12 +13,14 @@ const JobDetails = () => {
   const { id } = useParams();
   const [job, setJob] = useState<jobType | null>(null);
   const privateInstance = useAxiosPrivate()
+
+
   
   useEffect(() => {
     const fetchJob = async () => {
       try {
         const res = await dispatch(fetchJobById(id as string,privateInstance));
-        console.log(res)
+     
         setJob(res);
       } catch (err) {
         console.error(err);
@@ -28,7 +30,7 @@ const JobDetails = () => {
     if (id) {
       fetchJob();
     }
-  }, [dispatch, id]);
+  }, [dispatch, id,privateInstance]);
 
   if (!job) {
     return <div className="text-center text-gray-500 mt-10">Loading job details...</div>;
@@ -110,3 +112,4 @@ const JobDetails = () => {
 };
 
 export default JobDetails;
+

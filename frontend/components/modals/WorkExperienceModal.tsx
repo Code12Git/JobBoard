@@ -32,7 +32,6 @@ export default function ExperienceModal() {
   const handleOpen = () => setOpen(true);
   const handleClose = () => {
     setOpen(false);
-    // Reset form on close
     setFormData({
       companyName: '',
       position: '',
@@ -49,7 +48,6 @@ export default function ExperienceModal() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Submitted work experience:', formData);
-    // Here you would typically send data to your backend
     handleClose();
   };
 

@@ -1,47 +1,83 @@
 const _ = require('lodash');
 const prisma = require('../lib/index')
 const { appError} = require('../utils');
-const { CONFLICT } = require('../utils/errors');
+const { CONFLICT, INVALID_REQUEST_DATA } = require('../utils/errors');
 
-const create = async(body,user,params) => {
-    const {name, email, phone, message,experience,resume,coverLetter,previousStipend,previousCompany,skill,workHistory,status} = body;
-    const {id} = user;
-    const {jobId} = params;
-    try{
-        if(_.isEmpty(name) || _.isEmpty(email) || _.isEmpty(phone) || _.isEmpty(message) || _.isEmpty(experience) || _.isEmpty(resume)  || _.isEmpty(previousStipend) || _.isEmpty(previousCompany) || _.isEmpty(skill) || _.isEmpty(workHistory)){
-            throw new Error("Please fill all the fields");
+const create = async (body, user, params) => {
+    const { name, email, phone, message, experience, resume, coverLetter, previousStipend, previousCompany, skill, workHistory, status } = body;
+    const { id } = user;
+    const { jobId } = params;
+    console.log(user)
+    
+    try {
+         if (_.isEmpty(name) || _.isEmpty(email) || _.isEmpty(phone) || _.isEmpty(message) || 
+            _.isEmpty(experience) || _.isEmpty(resume) || _.isEmpty(previousStipend) || 
+            _.isEmpty(previousCompany) || _.isEmpty(skill) || !workHistory || workHistory.length === 0) {
+            throw new Error("Please fill all the required fields");
         }
 
-        const isExist = await prisma.application.findFirst({
-            where:{
+         const isExist = await prisma.application.findFirst({
+            where: {
                 userId: id,
                 jobId: jobId
             }
-        })
+        });
 
-        if(isExist){
+        if (isExist) {
             throw new appError(CONFLICT.code, "You have already applied for this job", CONFLICT.statusCode);
         }
-        const applyData = {
+
+         const setWorkData = await Promise.all(workHistory.map(async (work) => {
+            const { companyName, designation, startDate, endDate, description } = work;
+            
+            if (_.isEmpty(companyName) || _.isEmpty(designation) || _.isEmpty(startDate) || 
+                _.isEmpty(endDate) || _.isEmpty(description)) {
+                throw new appError(INVALID_REQUEST_DATA.code, "Please fill all work history fields", INVALID_REQUEST_DATA.statusCode);
+            }
+            
+            return await prisma.workHistory.create({
+                data: {
+                    userId: id,
+                    jobId: Number(jobId),
+                    companyName,
+                    designation,
+                    startDate: new Date(startDate),
+                    endDate: new Date(endDate),
+                    description
+                }
+            });
+        }));
+
+        
+
+         const applyData = {
             name,
             email,
-            phone,
+            phone:Number(phone),
             message,
-            experience,
+            experience:Number(experience),
             resume,
-            coverLetter,
-            previousStipend,
+            coverLetter: coverLetter || null,  
+            previousStipend: Number(previousStipend),
             previousCompany,
             skill,
-            workHistory,
-            status:status || "applied"
-        }
-        const data = await prisma.application.create({data:applyData})        
+            status: status || "applied",
+            userId: id,
+            jobId: Number(jobId),
+            workHistory: {
+                connect: setWorkData.map(work => ({ id: work.id }))
+            }
+        };
+
+        const data = await prisma.application.create({
+            data: applyData
+        });
+        
         return data;
-    }catch(err){
+    } catch (err) {
         throw err;
     }
-}
+};
 
 
 const deleteApplication = async (params) => {

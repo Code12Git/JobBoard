@@ -56,6 +56,7 @@ const getUser = async (clerkId, token) => {
         token,
       },
     });
+    
 
     return userData;
   } catch (err) {
